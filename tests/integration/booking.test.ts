@@ -96,29 +96,15 @@ describe("GET /booking", () => {
         {
           id: booking.id,
           Room: {
+            createdAt: createdHotelRoom.createdAt.toISOString(),
+            updatedAt: createdHotelRoom.updatedAt.toISOString(),
             id: createdHotelRoom.id,
             name: createdHotelRoom.name,
             capacity: createdHotelRoom.capacity,
             hotelId: createdHotelRoom.hotelId,
-            createdAt: createdHotel.createdAt.toISOString(),
-            updatedAt: createdHotel.updatedAt.toISOString()
+
           }
         });
-    });
-
-    it("should respond with status 200 and an empty array", async () => {
-      const user = await createUser();
-      const token = await generateValidToken(user);
-      const enrollment = await createEnrollmentWithAddress(user);
-      const ticketType = await createTicketTypeWithHotel();
-      const ticket = await createTicket(enrollment.id, ticketType.id, TicketStatus.PAID);
-      const payment = await createPayment(ticket.id, ticketType.price);
-      //Hoteis no banco
-
-      const response = await server.get("/booking").set("Authorization", `Bearer ${token}`);
-
-      expect(response.status).toEqual(httpStatus.OK);
-      expect(response.body).toEqual([]);
     });
   });
 });
