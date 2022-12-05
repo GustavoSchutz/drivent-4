@@ -2,10 +2,10 @@ import { Router } from "express";
 import { authenticateToken } from "@/middlewares";
 import { getUserBooking } from "@/controllers";
 
-const bookingsRouter = Router();
+const bookingRouter = Router();
 
-bookingsRouter
+bookingRouter
   .all("/*", authenticateToken)
   .get("/", getUserBooking);
 
-export { bookingsRouter };
+export { bookingRouter };
