@@ -17,6 +17,7 @@ import {
   createTicketTypeRemote,
   createHotel,
   createRoomWithHotelId,
+  createBooking,
 } from "../factories";
 import { cleanDb, generateValidToken } from "../helpers";
 
@@ -55,7 +56,7 @@ describe("GET /booking", () => {
   });
 
   describe("when token is valid", () => {
-    it("should respond with status 402 when user ticket is remote ", async () => {
+    it("should respond with status 404 when user has no booking ", async () => {
       const user = await createUser();
       const token = await generateValidToken(user);
       const enrollment = await createEnrollmentWithAddress(user);
@@ -65,7 +66,7 @@ describe("GET /booking", () => {
 
       const response = await server.get("/booking").set("Authorization", `Bearer ${token}`);
 
-      expect(response.status).toEqual(httpStatus.PAYMENT_REQUIRED);
+      expect(response.status).toEqual(httpStatus.NOT_FOUND);
     });
 
     it("should respond with status 404 when user has no enrollment ", async () => {
@@ -79,29 +80,30 @@ describe("GET /booking", () => {
       expect(response.status).toEqual(httpStatus.NOT_FOUND);
     });
 
-    it("should respond with status 200 and a list of hotels", async () => {
+    it("should respond with status 200 and booking id and room data", async () => {
       const user = await createUser();
       const token = await generateValidToken(user);
       const enrollment = await createEnrollmentWithAddress(user);
-      const ticketType = await createTicketTypeWithHotel();
-      const ticket = await createTicket(enrollment.id, ticketType.id, TicketStatus.PAID);
-      const payment = await createPayment(ticket.id, ticketType.price);
-
       const createdHotel = await createHotel();
+      const createdHotelRoom = await createRoomWithHotelId(createdHotel.id);
+      const booking = await createBooking(user.id, createdHotelRoom.id);
 
-      const response = await server.get("/hotels").set("Authorization", `Bearer ${token}`);
+      const response = await server.get("/booking").set("Authorization", `Bearer ${token}`);
 
       expect(response.status).toEqual(httpStatus.OK);
 
-      expect(response.body).toEqual([
+      expect(response.body).toEqual(
         {
-          id: createdHotel.id,
-          name: createdHotel.name,
-          image: createdHotel.image,
-          createdAt: createdHotel.createdAt.toISOString(),
-          updatedAt: createdHotel.updatedAt.toISOString()
-        }
-      ]);
+          id: booking.id,
+          Room: {
+            id: createdHotelRoom.id,
+            name: createdHotelRoom.name,
+            capacity: createdHotelRoom.capacity,
+            hotelId: createdHotelRoom.hotelId,
+            createdAt: createdHotel.createdAt.toISOString(),
+            updatedAt: createdHotel.updatedAt.toISOString()
+          }
+        });
     });
 
     it("should respond with status 200 and an empty array", async () => {
@@ -113,7 +115,7 @@ describe("GET /booking", () => {
       const payment = await createPayment(ticket.id, ticketType.price);
       //Hoteis no banco
 
-      const response = await server.get("/hotels").set("Authorization", `Bearer ${token}`);
+      const response = await server.get("/booking").set("Authorization", `Bearer ${token}`);
 
       expect(response.status).toEqual(httpStatus.OK);
       expect(response.body).toEqual([]);

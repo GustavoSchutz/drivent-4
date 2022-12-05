@@ -3,9 +3,10 @@ import { prisma } from "@/config";
 async function findUserBookingByUserId(userId: number) {
   return prisma.booking.findFirst({
     where: {
-      id: userId,
+      userId,
     },
-    include: {
+    select: {
+      id: true,
       Room: true,
     }
   });
